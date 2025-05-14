@@ -1,22 +1,25 @@
-import pymysql
-import bcrypt
+from utils import hash_password, get_connection
 
-user = "admin"
-password = "salasana123"
-password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-connection = pymysql.connect(
-    host="your-db-hostname",
-    user="your-db-user",
-    password="your-db-password",
-    database="Asiakastilaus",
-)
-cursor = connection.cursor()
-cursor.execute(
-    "INSERT INTO KAYTTAJA (TUNNUS, SALASANA_HASH) VALUES (%s, %s)",
-    (user, password_hash),
-)
-connection.commit()
-cursor.close()
-connection.close()
-print("Käyttäjä lisätty.")
+def add_user(username, password):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        hashed = hash_password(password)
+        sql = "INSERT INTO USERS (USERNAME, PASSWORD) VALUES (%s, %s)"
+        cursor.execute(sql, (username, hashed))
+        conn.commit()
+        print(f"Käyttäjä '{username}' lisätty onnistuneesti.")
+    except Exception as e:
+        print("Virhe lisättäessä käyttäjää:", e)
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+if __name__ == "__main__":
+    # Esimerkkikäyttö
+    username = input("Anna käyttäjätunnus: ")
+    password = input("Anna salasana: ")
+    add_user(username, password)
